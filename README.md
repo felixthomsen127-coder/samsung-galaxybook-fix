@@ -1,4 +1,4 @@
-# Samsung Galaxy Book Linux ACPI Fix
+# Samsung Galaxy Book Linux ACPI Fix this is all chat gpt i have no clue what this does but now my driver works so i hope it can help someone else
 
 A patched version of the Linux `samsung-galaxybook` driver for Samsung Galaxy Book laptops where the keyboard backlight, Fn hotkeys, or performance controls are not working correctly.
 
