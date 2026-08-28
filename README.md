@@ -19,3 +19,4 @@ On the tested system, the driver exposes:
 
 ```text
 samsung-galaxybook::kbd_backlight
+Running it again after updateing to Kernel: Linux 7.2.2-1-cachyos it still works as intended
