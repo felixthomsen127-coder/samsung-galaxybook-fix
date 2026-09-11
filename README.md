@@ -20,4 +20,4 @@ On the tested system, the driver exposes:
 ```text
 samsung-galaxybook::kbd_backlight
 Running it again after updateing to Kernel: Linux 7.2.2-1-cachyos it still works as intended
-This command : curl -fsSL https://raw.githubusercontent.com/felixthomsen127-coder/samsung-galaxybook-fix/main/install.fish | fish should install it 
+Run this command for easy install : curl -fsSL https://raw.githubusercontent.com/felixthomsen127-coder/samsung-galaxybook-fix/main/install.fish | fish
