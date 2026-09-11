@@ -1,61 +1,68 @@
 #!/usr/bin/env fish
 
-set -l MODULE "samsung-galaxybook"
-set -l KERNEL (uname -r)
-set -l DIR (cd (dirname (status --current-filename)); and pwd)
+set KERNEL (uname -r)
+set KDIR /usr/lib/modules/$KERNEL/build
 
-echo "Samsung Galaxy Book Driver Installer"
+echo "Samsung Galaxy Book ACPI fix"
 echo "Kernel: $KERNEL"
-echo
+echo ""
 
-if not test -d "/lib/modules/$KERNEL/build"
-    echo "ERROR: Kernel headers are missing for $KERNEL."
-    echo "Install the appropriate kernel headers and try again."
+if not test -d "$KDIR"
+    echo "ERROR: Matching kernel headers are not installed."
     exit 1
 end
 
 if not type -q clang
-    echo "ERROR: clang is required."
-    echo "Arch/CachyOS: sudo pacman -S clang"
+    echo "ERROR: clang is not installed."
+    echo "Run: sudo pacman -S clang"
     exit 1
 end
 
 if not type -q ld.lld
-    echo "ERROR: lld is required."
-    echo "Arch/CachyOS: sudo pacman -S lld"
+    echo "ERROR: lld is not installed."
+    echo "Run: sudo pacman -S lld"
     exit 1
 end
+
+printf "%s\n" "#ifndef _FIRMWARE_ATTRIBUTES_CLASS_H_" "#define _FIRMWARE_ATTRIBUTES_CLASS_H_" "#include <linux/device/class.h>" "extern struct class firmware_attributes_class;" "#endif" > firmware_attributes_class.h
 
 echo "Building driver..."
-make -C "$DIR" clean
+make -C "$KDIR" M="$PWD" clean
 or exit 1
 
-make -C "$DIR" CC=clang LD=ld.lld
-or begin
-    echo "ERROR: Driver compilation failed."
+make -C "$KDIR" M="$PWD" modules CC=clang LD=ld.lld
+or exit 1
+
+if not test -f samsung-galaxybook.ko
+    echo "ERROR: samsung-galaxybook.ko was not created."
     exit 1
 end
 
-if not test -f "$DIR/$MODULE.ko"
-    echo "ERROR: Driver module was not created."
+if not modinfo ./samsung-galaxybook.ko | grep -q SAMB430
+    echo "ERROR: SAMB430 support was not found in the driver."
     exit 1
 end
 
 echo "Installing driver..."
-sudo mkdir -p "/lib/modules/$KERNEL/updates"
+sudo mkdir -p /lib/modules/$KERNEL/updates
 or exit 1
-sudo cp "$DIR/$MODULE.ko" "/lib/modules/$KERNEL/updates/$MODULE.ko"
+sudo cp samsung-galaxybook.ko /lib/modules/$KERNEL/updates/
 or exit 1
-sudo depmod -a "$KERNEL"
+sudo depmod -a $KERNEL
 or exit 1
 
-echo "Loading driver..."
-if sudo modprobe "$MODULE"
-    echo
-    echo "Installation complete!"
-    echo "A reboot is recommended."
-else
-    echo
-    echo "Driver installed, but could not be loaded immediately."
-    echo "Try rebooting the computer."
+sudo modprobe -r samsung_galaxybook 2>/dev/null
+sudo modprobe samsung_galaxybook
+or begin
+    echo ""
+    echo "Driver installed, but could not be loaded."
+    echo "Reboot and it will load automatically."
+    exit 0
 end
+
+echo ""
+echo "DONE!"
+echo "SAMB430 support installed for $KERNEL."
+echo ""
+echo "Keyboard LEDs:"
+ls /sys/class/leds/ | grep samsung
